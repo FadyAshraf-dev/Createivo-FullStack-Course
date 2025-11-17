@@ -5,248 +5,238 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        *{
-            box-sizing: border-box;
-        }
-        td input
-        {
-            width: 3rem;
-        }
-        form input, select{
+        * { box-sizing: border-box; }
+        td input { width: 3rem; }
+        form input, select {
             width: 100%;
-            margin: 0.1rem 0rem;
+            margin: 0.1rem 0;
         }
         form {
             margin: auto;
+            width: 70vw;
             display: flex;
             justify-content: center;
-            align-items: center;
-            width: 70vw;
             flex-wrap: wrap;
-            
         }
         table {
+
             margin: auto;
             width: 70vw;
-            flex-wrap: wrap;
-            
         }
-        td button,td input{
-            width:100%;
-        }
-        td{
-            text-align: center;
-        }
+        td button, td input { width: 100%; }
+        td { text-align: center; }
     </style>
 </head>
+
 <body>
-    <form action="">
+
+<form id="form">
     <input type="text" id="name" placeholder="Name">
     <input type="number" id="price" placeholder="Price">
     <input type="number" id="quantity" placeholder="Quantity">
-    <select id="category" >
+
+    <select id="category">
         <option value="">--category</option>
         <option value="Phones">Phones</option>
         <option value="TVs">TVs</option>
         <option value="Tablets">Tablets</option>
     </select>
+
     <select id="brand">
         <option value="">--brand</option>
         <option value="Apple">Apple</option>
         <option value="Samsung">Samsung</option>
         <option value="LG">LG</option>
     </select>
-    <button id="add">Add Item</button>
-    <input type="text" name="search" id="search" placeholder="Search?">
-    </form>
+
+    <button id="add" type="button">Add Item</button>
+    <input type="text" id="search" placeholder="Search?">
+</form>
+
 <table border="1">
     <thead>
         <tr>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Category</th>
-            <th>Brand</th>
-            <th>Remove</th>
-            <th>Edit</th>
+            <th>Item</th><th>Price</th><th>Qty</th>
+            <th>Category</th><th>Brand</th>
+            <th>Remove</th><th>Edit</th>
         </tr>
     </thead>
-    <tbody>
-    </tbody>
-    </table>
-    <script>
-        let name = document.querySelector("#name")
-        let price = document.querySelector("#price")
-        let quantity = document.querySelector("#quantity")
-        let category = document.querySelector("#category")
-        let brand = document.querySelector("#brand")
-        let tbody=document.querySelector("tbody")
-        let btnAdd = document.querySelector("#add")
-        let search = document.querySelector("#search")
+    <tbody></tbody>
+</table>
 
-        category.addEventListener("change", ()=>{
-            category.firstElementChild.style.display = "none"
-        })
-        brand.addEventListener("change", ()=>{
-            brand.firstElementChild.style.display = "none"
-        })
-        search.addEventListener("keyup", ()=>{
-            renderTable(data.filter((obj)=>{return obj.name.toLowerCase().includes(search.value.toLowerCase())}))
-        })
-        let data = JSON.parse(window.localStorage.getItem("data"))||[]
-        // let names = JSON.parse(window.localStorage.getItem("names"))||[]
-        // let emails = JSON.parse(window.localStorage.getItem("emails"))||[]
-        // let phones = JSON.parse(window.localStorage.getItem("phones"))||[]
+<script>
+    const nameEl = document.querySelector("#name");
+    const priceEl = document.querySelector("#price");
+    const qtyEl = document.querySelector("#quantity");
+    const categoryEl = document.querySelector("#category");
+    const brandEl = document.querySelector("#brand");
+    const searchEl = document.querySelector("#search");
+    const tbody = document.querySelector("tbody");
+    const addBtn = document.querySelector("#add");
 
+    let data = JSON.parse(localStorage.getItem("data")) || [];
 
-        function createInput(value, type="text") {
-            const input = document.createElement("input")
-            input.type = type
-            input.value = value
-            return input
-        }
+    /* ------------------------- Helpers ------------------------- */
 
-        
+    const createInput = (value, type = "text") =>
+        Object.assign(document.createElement("input"), { value, type });
 
-        function createBtn(text, className) {
-            const btn = document.createElement("button")
-            btn.textContent = text
-            btn.classList.add(className)
-            return btn
-        }
+    const createBtn = (label, cls) =>
+        Object.assign(document.createElement("button"), {
+            textContent: label,
+            className: cls
+        });
 
+    const save = () =>
+        localStorage.setItem("data", JSON.stringify(data));
 
+    const resetForm = () => {
+        nameEl.value = "";
+        priceEl.value = "";
+        qtyEl.value = "";
+        categoryEl.value = "";
+        brandEl.value = "";
+        categoryEl.firstElementChild.style.display = "block";
+        brandEl.firstElementChild.style.display = "block";
+    };
 
+    const replaceEditWithCanfirm = (row, confirmBtn, cancelBtn)=>{
+        row.children[6].innerHTML = "";
+        row.children[6].append(confirmBtn, cancelBtn);
 
-        function addRow(index, obj) {
-            const row = document.createElement("tr")
+    }
 
-            row.innerHTML = `
-                <td>${obj.name}</td>
-                <td>${obj.price}</td>
-                <td>${obj.quantity}</td>
-                <td>${obj.category}</td>
-                <td>${obj.brand}</td>
-                <td><button class="remove">Remove</button></td>
-                <td><button class="edit">edit</button></td>
-            `;
-            row.querySelector(".remove").addEventListener("click" ,()=>{
-                // names.splice(index,1)
-                // emails.splice(index,1)
-                // phones.splice(index,1)
-                data.splice(index, 1)
-                saveData()
-                renderTable()
-            })
+    const replaceTableCellsWithInputs = (row, field, i)=>{
+        row.children[i].innerHTML = "";
+        row.children[i].appendChild(field);
 
-            row.querySelector(".edit").addEventListener("click" ,()=>{
-                const nameInput = createInput(data[index].name)
-                const priceInput = createInput(data[index].price, "number")
-                const quantityInput = createInput(data[index].quantity, "number")
+    }
 
+    /* ------------------------- Rendering ------------------------- */
 
-                const categorySelect = category.cloneNode(true)
-                const brandSelect = brand.cloneNode(true)
+    function renderTable(list = data) {
+        tbody.innerHTML = "";
 
-                categorySelect.firstElementChild.style.display = "none"
-                brandSelect.firstElementChild.style.display = "none"
+        list.forEach((item, index) => addRow(index, item));
 
-
-                categorySelect.value = data[index].category
-                brandSelect.value = data[index].brand
-
-
-
-                const confirmBtn = createBtn("confirm", "confirm")
-                const cancelBtn = createBtn("cancel", "cancel")
-
-                const inputs = [nameInput, priceInput, quantityInput, categorySelect, brandSelect]
-
-
-                //replace three td with three inputs
-                inputs.forEach((input, i) => {
-                    row.children[i].innerHTML = ""
-                    row.children[i].appendChild(input)
-                })
-
-
-                //replacee edit with confirm and cancel button
-                row.children[6].innerHTML = ""
-                row.children[6].append(confirmBtn, cancelBtn)
-
-                row.querySelector(".cancel").addEventListener("click", ()=>{
-                    renderTable()
-                })
-                
-                row.querySelector(".confirm").addEventListener("click", ()=>{
-                    // names[index] = nameInput.value
-                    // emails[index] = emailInput.value
-                    // phones[index] = phoneInput.value
-                    
-                    if(!nameInput.value || !priceInput.value || !quantityInput.value || !categorySelect.value||!brandSelect.value)return;
-                    data[index] = {
-                        name:nameInput.value,
-                        price:priceInput.value,
-                        quantity:quantityInput.value,
-                        category:categorySelect.value,
-                        brand:brandSelect.value
-                    }
-                    saveData()
-                    renderTable()
-                })
-
-                 
-            }
-        )
-            tbody.appendChild(row)
-        }
-
-        function saveData() {
-            // window.localStorage.setItem("names", JSON.stringify(names))
-            // window.localStorage.setItem("emails", JSON.stringify(emails))
-            // window.localStorage.setItem("phones", JSON.stringify(phones))
-            window.localStorage.setItem("data", JSON.stringify(data))
-        }
-
-
-        function renderTable(newData = data) {
-            tbody.innerHTML = ""
-            newData.forEach((obj, i) => {
-                addRow(i,obj)
-            });
-            const tfoot =
+        tbody.insertAdjacentHTML(
+            "beforeend",
             `<tfoot>
-                <tr style="text-align:center">
-                    <td colspan="7">Total is ${newData.reduce((acc, obj)=>{return acc+Number(obj.price)}, 0)}$</td>
-                </tr>
+                <tr><td colspan="7" style="text-align:center">
+                    Total is ${list.reduce((a, o) => a + Number(o.price), 0)}$
+                </td></tr>
             </tfoot>`
-            tbody.insertAdjacentHTML("beforeend", tfoot)
-        }
-        btnAdd.addEventListener("click", ()=>{
-            if(!name.value || !price.value || !quantity.value|| !category.value || !brand.value)return;
-            // names.push(name.value)
-            // emails.push(email.value)
-            // phones.push(phone.value)
-            data.push({
-                name:name.value,
-                price:price.value,
-                quantity:quantity.value,
-                category:category.value,
-                brand:brand.value
-            })
-            saveData()
-            renderTable()
-            name.value=""
-            price.value=""
-            quantity.value=""
-            
-            category.firstElementChild.style.display = "block"
-            brand.firstElementChild.style.display = "block"
+        );
+    }
 
-            category.value=""
-            brand.value=""
-        })
-        renderTable()
-    </script>
+    function addRow(index, item) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.price}</td>
+            <td>${item.quantity}</td>
+            <td>${item.category}</td>
+            <td>${item.brand}</td>
+            <td><button class="remove">Remove</button></td>
+            <td><button class="edit">Edit</button></td>
+        `;
+
+        row.querySelector(".remove").onclick = () => {
+            data.splice(index, 1);
+            save();
+            renderTable();
+        };
+
+        row.querySelector(".edit").onclick = () => enterEditMode(row, index);
+
+        tbody.appendChild(row);
+    }
+
+    /* ------------------------- Edit Mode ------------------------- */
+
+    function enterEditMode(row, index) {
+        const original = data[index];
+
+        // Create Inputs (short & clean)
+        const nameInput     = Object.assign(document.createElement("input"), { value: original.name });
+        const priceInput    = Object.assign(document.createElement("input"), { value: original.price, type: "number" });
+        const qtyInput      = Object.assign(document.createElement("input"), { value: original.quantity, type: "number" });
+
+        // Clone selects
+        const categorySelect = categoryEl.cloneNode(true);
+        const brandSelect    = brandEl.cloneNode(true);
+
+        // Assigning select values + hiding first option
+        [[categorySelect, original.category], [brandSelect, original.brand]].forEach(([select, val]) => {
+            Object.assign(select, { value: val });
+            Object.assign(select.firstElementChild.style, { display: "none" });
+        });
+
+        // Combine all editable fields
+        const fields = [nameInput, priceInput, qtyInput, categorySelect, brandSelect];
+
+        // Replace table cells with the new inputs/selects
+        fields.forEach((field, i) => {
+            replaceTableCellsWithInputs(row, field, i)
+        });
+
+        // Buttons
+        const confirmBtn = Object.assign(document.createElement("button"), { textContent: "Confirm", className: "confirm" });
+        const cancelBtn  = Object.assign(document.createElement("button"), { textContent: "Cancel", className: "cancel" });
+
+        replaceEditWithCanfirm(row, confirmBtn, cancelBtn)
+        // Cancel Action
+        cancelBtn.onclick = () => renderTable();
+
+        // Confirm Action
+        confirmBtn.onclick = () => {
+            if (!nameInput.value || !priceInput.value || !qtyInput.value ||
+                !categorySelect.value || !brandSelect.value) return;
+
+            data[index] = {
+                name: nameInput.value,
+                price: priceInput.value,
+                quantity: qtyInput.value,
+                category: categorySelect.value,
+                brand: brandSelect.value
+            };
+            
+            save();
+            renderTable();
+        };
+    }
+    /* ------------------------- Events ------------------------- */
+
+    addBtn.onclick = () => {
+        if (!nameEl.value || !priceEl.value || !qtyEl.value ||
+            !categoryEl.value || !brandEl.value) return;
+
+        data.push({
+            name: nameEl.value,
+            price: priceEl.value,
+            quantity: qtyEl.value,
+            category: categoryEl.value,
+            brand: brandEl.value
+        });
+
+        save();
+        renderTable();
+        resetForm();
+    };
+
+    searchEl.onkeyup = () => {
+        const q = searchEl.value.toLowerCase();
+        renderTable(data.filter(item =>
+            item.name.toLowerCase().includes(q)
+        ));
+    };
+
+    categoryEl.onchange = () => categoryEl.firstElementChild.style.display = "none";
+    brandEl.onchange = () => brandEl.firstElementChild.style.display = "none";
+
+    /* ------------------------- Initalise ------------------------- */
+    renderTable();
+</script>
+
 </body>
 </html>
